@@ -1,0 +1,12 @@
+matplotlib
+numpy
+streamlit
+astropy
+skyfield
+transformers
+torch
+pillow
+requests
+gtts
+geocoder
+skyfield pytz
