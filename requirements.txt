@@ -9,5 +9,5 @@ pillow
 requests
 gtts
 geocoder
-skyfield pytz
+skyfield 
 geopy
