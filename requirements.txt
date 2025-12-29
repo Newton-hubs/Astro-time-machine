@@ -10,3 +10,4 @@ requests
 gtts
 geocoder
 skyfield pytz
+geopy

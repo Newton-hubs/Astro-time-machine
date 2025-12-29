@@ -4,33 +4,97 @@ from moon import get_moon_data
 from weather import get_cloud_cover, is_moon_hidden_by_clouds
 from sky_generator import generate_sky_image
 import base64
-import geocoder
 from ai_interpreter import generate_sky_description
 from ai_voice import generate_voice_narration
 import re
+import requests
+from geopy.geocoders import Nominatim
+import streamlit.components.v1 as components
+
 
 # ===============================
-# Get User Location (IP lookup)
+# Geocoder (City Search)
+# ===============================
+geolocator = Nominatim(user_agent="astro_time_machine_app")
+
+def lookup_city_coordinates(city_name: str):
+    try:
+        location = geolocator.geocode(city_name)
+        if location:
+            return {
+                "city": location.address.split(",")[0],
+                "lat": location.latitude,
+                "lon": location.longitude
+            }
+    except:
+        pass
+    return None
+
+
+# ===============================
+# Safe IP Location Detection
 # ===============================
 def get_user_location():
     try:
-        g = geocoder.ip("me")
-        if g.ok and g.latlng:
-            return {
-                "city": g.city or "Unknown",
-                "lat": g.latlng[0],
-                "lon": g.latlng[1],
-            }
-        return None
+        r = requests.get("https://ipapi.co/json/", timeout=5)
+        if r.status_code == 200:
+            d = r.json()
+            lat = d.get("latitude")
+            lon = d.get("longitude")
+            if lat and lon:
+                return {
+                    "city": d.get("city", "Unknown"),
+                    "lat": lat,
+                    "lon": lon,
+                }
     except:
-        return None
+        pass
+    return None
 
 
+# ===============================
+# Browser GPS Detection
+# ===============================
+def get_browser_location():
+    """
+    Requests browser GPS and returns 'lat,lon' string via hidden input binding.
+    """
+    # hidden text input to receive data from JS
+    st.text_input("", key="gps_coords", label_visibility="collapsed")
+
+    components.html("""
+    <script>
+    navigator.geolocation.getCurrentPosition(
+        function(pos) {
+            const value = pos.coords.latitude + "," + pos.coords.longitude;
+
+            // find the hidden Streamlit input
+            const input = window.parent.document.querySelector(
+                'input[id="gps_coords"]'
+            );
+
+            if (input) {
+                input.value = value;
+
+                // notify Streamlit of the change
+                const event = new Event('input', { bubbles: true });
+                input.dispatchEvent(event);
+            }
+        }
+    );
+    </script>
+    """, height=0)
+
+    return st.session_state.get("gps_coords", None)
+
+# ===============================
+# Page Config
+# ===============================
 st.set_page_config(layout="wide", page_title="Astro Time Machine", page_icon="🌌")
 
 
 # ===============================
-# Global UI Styling
+# UI Styling (unchanged)
 # ===============================
 st.markdown("""
 <style>
@@ -127,7 +191,7 @@ div.block-container {
 
 
 # ===============================
-# Session State Defaults
+# Session Defaults
 # ===============================
 if "current_sky_image" not in st.session_state:
     st.session_state.current_sky_image = None
@@ -139,7 +203,7 @@ if "current_sky_image" not in st.session_state:
 
 
 # ===============================
-# Header
+# Header Bar
 # ===============================
 st.markdown("""
 <div class="top-bar">
@@ -150,45 +214,106 @@ st.markdown("""
 
 
 # ===============================
-# Layout (Controls | Sky | Info)
+# Layout
 # ===============================
 col_controls, col_sky, col_info = st.columns([1.1, 1.3, 0.9])
 
 
 # ======================================================
-# 🎛 LEFT — Mission Control
+# 🎛 LEFT — MISSION CONTROL
 # ======================================================
 with col_controls:
 
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown('<div class="section-title">🎛 Mission Control</div>', unsafe_allow_html=True)
 
-    use_live_location = st.toggle("📡 Use my live location")
+    # -------------------------------------------------
+    # LOCATION SYSTEM (GPS + IP + CITY SEARCH + MANUAL)
+    # -------------------------------------------------
+    use_live_location = st.toggle("📡 Use my live location (GPS / IP)")
 
+    location = "Unknown"
+    latitude = 12.97
+    longitude = 77.59
+
+    # ---------- AUTO MODE ----------
     if use_live_location:
-        user_loc = get_user_location()
 
-        if user_loc:
-            location = user_loc["city"]
-            latitude = user_loc["lat"]
-            longitude = user_loc["lon"]
-            st.success(f"📍 Location detected: {location}")
+        gps_clicked = st.button("📍 Detect using GPS")
 
-        else:
-            st.error("⚠️ Unable to detect location — using manual mode")
-            use_live_location = False
+        got_location = False
 
+        # Try GPS first
+        if gps_clicked:
+            coords = get_browser_location()
+            if coords:
+                try:
+                    lat, lon = map(float, coords.split(","))
+                    latitude, longitude = lat, lon
+                    location = "My Location"
+                    got_location = True
+                    st.success("✔ GPS location detected")
+                except:
+                    st.error("⚠ Unable to read GPS values")
+
+        # Fallback to IP lookup
+        if not got_location:
+            ip_loc = get_user_location()
+
+            if ip_loc:
+                location = ip_loc["city"]
+                latitude = ip_loc["lat"]
+                longitude = ip_loc["lon"]
+                st.success(f"📍 Location detected: {location}")
+            else:
+                st.info("🌐 Auto-location unavailable — switched to manual mode")
+                use_live_location = False
+
+
+    # ---------- MANUAL MODE ----------
     if not use_live_location:
-        location = st.selectbox("Site", ["Bangalore", "New York", "London"])
 
-        if location == "Bangalore":
-            latitude, longitude = 12.97, 77.59
-        elif location == "New York":
-            latitude, longitude = 40.71, -74.00
+        location_mode = st.radio(
+            "Choose location method",
+            ["Select a city", "Search a city", "Custom coordinates"]
+        )
+
+        # Preset cities
+        if location_mode == "Select a city":
+            location = st.selectbox("City", ["Bangalore", "New York", "London"])
+
+            if location == "Bangalore":
+                latitude, longitude = 12.97, 77.59
+            elif location == "New York":
+                latitude, longitude = 40.71, -74.00
+            else:
+                latitude, longitude = 51.50, -0.12
+
+        # City search (no coordinates needed)
+        elif location_mode == "Search a city":
+            city_input = st.text_input("Enter city name")
+
+            if city_input:
+                city_result = lookup_city_coordinates(city_input)
+
+                if city_result:
+                    location = city_result["city"]
+                    latitude = city_result["lat"]
+                    longitude = city_result["lon"]
+                    st.success(f"📍 Found: {location}")
+                else:
+                    st.error("❌ City not found — try another name")
+
+        # Manual expert mode
         else:
-            latitude, longitude = 51.50, -0.12
+            location = "Custom Location"
+            latitude = st.number_input("Latitude", value=12.97, format="%.6f")
+            longitude = st.number_input("Longitude", value=77.59, format="%.6f")
 
+
+    # ---------- DATE & TIME ----------
     c1, c2 = st.columns(2)
+
     with c1:
         selected_date = st.date_input(
             "Date",
@@ -206,7 +331,7 @@ with col_controls:
 
 
 # ======================================================
-# 🌌 CENTER — Sky Display
+# 🌌 CENTER — SKY DISPLAY
 # ======================================================
 with col_sky:
 
@@ -256,7 +381,6 @@ with col_sky:
 
             st.session_state.current_sky_image = str(image_path)
 
-            # 🤖 AI text summary
             st.session_state.ai_summary = generate_sky_description(
                 location=location,
                 date=selected_date,
@@ -268,7 +392,6 @@ with col_sky:
                 cloud_cover=cloud_cover,
             )
 
-            # 🎧 Voice narration
             st.session_state.voice_path = generate_voice_narration(
                 st.session_state.ai_summary
             )
@@ -296,23 +419,22 @@ with col_sky:
 
 
 # ======================================================
-# 🛰 RIGHT — Info Tiles
+# 🛰 RIGHT — INFO TILES (unchanged)
 # ======================================================
-with col_info:
-
-    def info_tile(emoji, label, value):
-        st.markdown(f"""
-        <div class="info-tile">
-            <div style="font-size:1.4rem">{emoji}</div>
-            <div style="color:#9ca6d8;font-size:.8rem">{label}</div>
-            <div style="font-size:.95rem;font-weight:600;color:#e8ecff">
-                {value}
-            </div>
+def info_tile(emoji, label, value):
+    st.markdown(f"""
+    <div class="info-tile">
+        <div style="font-size:1.4rem">{emoji}</div>
+        <div style="color:#9ca6d8;font-size:.8rem">{label}</div>
+        <div style="font-size:.95rem;font-weight:600;color:#e8ecff">
+            {value}
         </div>
-        """, unsafe_allow_html=True)
+    </div>
+    """, unsafe_allow_html=True)
 
-    planet_list = ", ".join(st.session_state.visible_planets) or "None"
+planet_list = ", ".join(st.session_state.visible_planets) or "None"
 
+with col_info:
     info_tile("🌙", "Moon phase", st.session_state.moon_phase_label)
     info_tile("👁️", "Visibility", st.session_state.moon_status_text)
     info_tile("🪐", "Planets", planet_list)
@@ -320,36 +442,17 @@ with col_info:
 
 
 # ======================================================
-# 🤖 FULL-WIDTH AI INTERPRETATION (BOTTOM)
+# 🤖 AI INTERPRETATION (unchanged)
 # ======================================================
-
 def clean_ai_summary(text):
-    """
-    Cleans AI HTML output so raw <div> tags do not appear.
-    Keeps inner text and formatting.
-    """
-
     if not text:
         return ""
-
-    # Remove ALL opening/closing div tags (case-insensitive)
     text = re.sub(r"</?div[^>]*>", "", text, flags=re.IGNORECASE)
-
-    # Remove accidental code block formatting
     text = text.replace("```", "")
+    return text.strip()
 
-    # Remove leading/trailing whitespace
-    text = text.strip()
-
-    return text
-
-
-
-# Clean AI output safely
 safe_ai_text = clean_ai_summary(st.session_state.ai_summary)
 
-
-# ---------- UI Card ----------
 st.markdown("""
 <div style="
     margin-top:14px;
@@ -358,24 +461,12 @@ st.markdown("""
     border-radius:14px;
     padding:1rem 1.2rem;
 ">
-    <div style="
-        font-size:1.2rem;
-        font-weight:700;
-        color:#e9ecff;
-        margin-bottom:6px;
-    ">
+    <div style="font-size:1.2rem;font-weight:700;color:#e9ecff;margin-bottom:6px;">
         🤖 AI Sky Interpretation
     </div>
-
-    
 """, unsafe_allow_html=True)
 
-
-# ---------- Insert Cleaned AI Text ----------
 st.markdown(safe_ai_text, unsafe_allow_html=True)
-
-
-# ---------- Close container ----------
 st.markdown("</div></div>", unsafe_allow_html=True)
 
 
