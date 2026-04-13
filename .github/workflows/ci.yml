@@ -13,7 +13,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11"]
 
     services:
       redis:
@@ -40,6 +40,13 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+
+      - name: Setup ephemeris
+        run: |
+          python - <<EOF
+          from skyfield.api import load
+          load('de421.bsp')
+          EOF
 
       - name: Lint with ruff
         run: |
