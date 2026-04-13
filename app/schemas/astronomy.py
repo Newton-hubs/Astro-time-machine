@@ -4,7 +4,7 @@ Pydantic v2 schemas for all API request/response models.
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator
 
 
 # ── Requests ────────────────────────────────────────────────────────────────

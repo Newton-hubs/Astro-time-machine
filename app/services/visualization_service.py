@@ -4,7 +4,7 @@ Sky visualization service — generates a circular night-sky projection as a PNG
 import base64
 import io
 import math
-from typing import List, Optional
+from typing import List
 
 import matplotlib
 import matplotlib.pyplot as plt

@@ -1,4 +1,3 @@
-from math import radians, sin, cos
 
 # Minimal clean constellation dataset
 # Only a few bright stars for now (can expand later)

@@ -10,7 +10,6 @@ import httpx
 import structlog
 
 from app.core.config import settings
-from app.core.exceptions import WeatherServiceError
 from app.schemas.astronomy import WeatherData
 
 logger = structlog.get_logger(__name__)

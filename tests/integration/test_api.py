@@ -3,7 +3,7 @@ Integration tests for FastAPI endpoints.
 Redis and external services are mocked.
 """
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi.testclient import TestClient

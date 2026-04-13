@@ -4,8 +4,7 @@ Rate limiting (sliding window) and response caching via Redis.
 import hashlib
 import json
 import time
-from functools import wraps
-from typing import Any, Callable, Optional
+from typing import Any, Optional
 
 import structlog
 

@@ -1,14 +1,13 @@
 """
 Unit tests for Pydantic schemas and cache key generation.
 """
-from datetime import datetime, timezone
+from datetime import datetime
 
 import pytest
 from pydantic import ValidationError
 
 from app.schemas.astronomy import (
     MoonData,
-    PlanetData,
     SkyQueryRequest,
     WeatherData,
 )

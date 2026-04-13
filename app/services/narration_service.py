@@ -8,7 +8,6 @@ import httpx
 import structlog
 
 from app.core.config import settings
-from app.core.exceptions import NarrationError
 from app.schemas.astronomy import MoonData, PlanetData, WeatherData
 
 logger = structlog.get_logger(__name__)
