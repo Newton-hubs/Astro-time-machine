@@ -4,16 +4,12 @@ Uses Skyfield for all ephemeris-based calculations.
 The ephemeris file (de421.bsp) is downloaded once and cached on disk.
 """
 import math
-import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import List
 
 import structlog
-from skyfield.api import Loader, Star, Topos, wgs84
-from skyfield.data import mpc
-from skyfield.framelib import ecliptic_frame
-from skyfield.units import Angle
+from skyfield.api import Loader, wgs84
 
 from app.core.config import settings
 from app.core.exceptions import EphemerisError

@@ -2,7 +2,6 @@
 Geocoding service — resolves location names to lat/lon via Nominatim (OSM).
 Respects OSM's usage policy with a User-Agent header and request throttle.
 """
-from typing import Optional
 
 import httpx
 import structlog

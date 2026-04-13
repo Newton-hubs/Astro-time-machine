@@ -3,7 +3,6 @@ Celery task queue — handles async jobs (e.g. TTS audio generation).
 Workers are run separately: `celery -A app.tasks.worker worker --loglevel=info`
 """
 import io
-import uuid
 
 import structlog
 from celery import Celery

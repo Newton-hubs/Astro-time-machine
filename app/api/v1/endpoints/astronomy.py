@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime, timezone
 
 import structlog
-from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from fastapi import APIRouter, Request
 
 from app.core.cache import cache_key, get_cached, set_cached
 from app.core.exceptions import RateLimitExceededError
