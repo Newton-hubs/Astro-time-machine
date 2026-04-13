@@ -10,12 +10,14 @@ import re
 import requests
 from geopy.geocoders import Nominatim
 import streamlit.components.v1 as components
+from geopy.exc import GeocoderServiceError, GeocoderTimedOut
 
 
 # ===============================
 # Geocoder (City Search)
 # ===============================
 geolocator = Nominatim(user_agent="astro_time_machine_app")
+
 
 def lookup_city_coordinates(city_name: str):
     try:
@@ -26,14 +28,16 @@ def lookup_city_coordinates(city_name: str):
                 "lat": location.latitude,
                 "lon": location.longitude
             }
-    except:
-        pass
+    except (GeocoderServiceError, GeocoderTimedOut):
+        return None
+
     return None
 
 
 # ===============================
 # Safe IP Location Detection
 # ===============================
+
 def get_user_location():
     try:
         r = requests.get("https://ipapi.co/json/", timeout=5)
@@ -47,10 +51,10 @@ def get_user_location():
                     "lat": lat,
                     "lon": lon,
                 }
-    except:
+    except requests.RequestException:
         pass
-    return None
 
+    return None
 
 # ===============================
 # Browser GPS Detection
@@ -253,8 +257,9 @@ with col_controls:
                     location = "My Location"
                     got_location = True
                     st.success("✔ GPS location detected")
-                except:
+                except ValueError:
                     st.error("⚠ Unable to read GPS values")
+        
 
         # Fallback to IP lookup
         if not got_location:

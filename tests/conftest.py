@@ -11,8 +11,8 @@ def mock_redis_lifespan():
     Prevent real Redis connections during tests.
     Patches connect/disconnect so the FastAPI lifespan doesn't fail.
     """
-    with patch("app.db.redis_client.redis_client.connect", new_callable=AsyncMock) as mock_connect, \
-         patch("app.db.redis_client.redis_client.disconnect", new_callable=AsyncMock) as mock_disconnect:
+    with patch("app.db.redis_client.redis_client.connect", new_callable=AsyncMock) , \
+         patch("app.db.redis_client.redis_client.disconnect", new_callable=AsyncMock):
         # Provide a minimal async Redis mock
         mock_redis = MagicMock()
         mock_redis.ping = AsyncMock(return_value=True)
