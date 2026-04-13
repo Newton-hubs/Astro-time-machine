@@ -79,7 +79,7 @@ class AstronomyService:
         alt, az, _ = astrometric.altaz()
 
         # Illumination via elongation
-        sun_astrometric = observer.at(t).observe(sun).apparent()
+        # sun_astrometric = observer.at(t).observe(sun).apparent()
         moon_from_earth = earth.at(t).observe(moon)
         sun_from_earth = earth.at(t).observe(sun)
         elongation_deg = moon_from_earth.separation_from(sun_from_earth).degrees

@@ -107,10 +107,13 @@ class TestComputeMoon:
             t_mock = MagicMock()
             ts_mock.from_datetime.return_value = t_mock
 
-            alt_mock = MagicMock(); alt_mock.degrees = 30.0
-            az_mock = MagicMock(); az_mock.degrees = 90.0
+            alt_mock = MagicMock() 
+            alt_mock.degrees = 30.0
+            az_mock = MagicMock() 
+            az_mock.degrees = 90.0
             dist_mock = MagicMock()
-            sep_mock = MagicMock(); sep_mock.degrees = 180.0
+            sep_mock = MagicMock() 
+            sep_mock.degrees = 180.0
 
             apparent = MagicMock()
             apparent.altaz.return_value = (alt_mock, az_mock, dist_mock)
@@ -137,10 +140,13 @@ class TestComputeMoon:
             t_mock = MagicMock()
             ts_mock.from_datetime.return_value = t_mock
 
-            alt_mock = MagicMock(); alt_mock.degrees = -10.0
-            az_mock = MagicMock(); az_mock.degrees = 90.0
+            alt_mock = MagicMock()
+            alt_mock.degrees = -10.0
+            az_mock = MagicMock()
+            az_mock.degrees = 90.0
             dist_mock = MagicMock()
-            sep_mock = MagicMock(); sep_mock.degrees = 90.0
+            sep_mock = MagicMock() 
+            sep_mock.degrees = 90.0
 
             apparent = MagicMock()
             apparent.altaz.return_value = (alt_mock, az_mock, dist_mock)
@@ -167,8 +173,10 @@ class TestComputePlanets:
         eph_mock = MagicMock()
         ts_mock.from_datetime.return_value = MagicMock()
 
-        alt_mock = MagicMock(); alt_mock.degrees = 20.0
-        az_mock = MagicMock(); az_mock.degrees = 90.0
+        alt_mock = MagicMock() 
+        alt_mock.degrees = 20.0
+        az_mock = MagicMock()
+        az_mock.degrees = 90.0
         dist_mock = MagicMock()
 
         apparent = MagicMock()
@@ -199,8 +207,10 @@ class TestComputePlanets:
         eph_mock = MagicMock()
         ts_mock.from_datetime.return_value = MagicMock()
 
-        alt_mock = MagicMock(); alt_mock.degrees = 30.0  # above 5° threshold
-        az_mock = MagicMock(); az_mock.degrees = 90.0
+        alt_mock = MagicMock()
+        alt_mock.degrees = 30.0  # above 5° threshold
+        az_mock = MagicMock()
+        az_mock.degrees = 90.0
         dist_mock = MagicMock()
 
         apparent = MagicMock()
