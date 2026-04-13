@@ -26,6 +26,8 @@ celery==5.4.0
 # Geocoding
 geopy==2.4.1
 
+ruff==0.x.x
+
 # TTS
 gTTS==2.5.1
 
