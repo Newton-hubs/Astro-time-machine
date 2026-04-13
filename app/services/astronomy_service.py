@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import List
 
 import structlog
-from skyfield.api import Loader, wgs84
+from skyfield.api import Loader, load, wgs84
 
 from app.core.config import settings
 from app.core.exceptions import EphemerisError
@@ -48,8 +48,11 @@ class AstronomyService:
     def _load_ephemeris(cls):
         if cls._eph is None:
             try:
-                load = Loader(Path(settings.EPHEMERIS_FILE).parent or ".")
+                
+
+                load = Loader(".")   # 👈 ALWAYS use current director   y
                 cls._ts = load.timescale()
+                cls._eph = load("de421.bsp")   # 👈 force correct file
                 cls._eph = load(settings.EPHEMERIS_FILE)
                 logger.info("ephemeris_loaded", file=settings.EPHEMERIS_FILE)
             except Exception as exc:
