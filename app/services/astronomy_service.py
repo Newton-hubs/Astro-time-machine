@@ -153,7 +153,8 @@ class AstronomyService:
                     is_visible=is_visible,
                 ))
             except Exception as exc:
-                logger.warning("planet_compute_failed", planet=planet_key, error=str(exc))
+                logger.error("planet_compute_failed", planet=planet_key, error=str(exc))
+                raise
 
         return results
 
