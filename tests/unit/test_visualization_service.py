@@ -5,7 +5,7 @@ from app.services.visualization_service import VisualizationService
 from app.services.narration_service import NarrationService
 from app.services.geocoding_service import GeocodingService
 
-from app.schemas.astronomy import MoonData, PlanetData, WeatherData
+from app.schemas.astronomy import MoonData, WeatherData
 
 
 # ---------------------------
