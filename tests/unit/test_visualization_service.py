@@ -25,8 +25,7 @@ async def test_geocoding(mock_client):
 
     mock_ctx = AsyncMock()
     mock_ctx.__aenter__.return_value = mock_ctx
-    mock_ctx.get.return_value = mock_response
-
+    mock_ctx.get = AsyncMock(return_value=mock_response)
     mock_client.return_value = mock_ctx
 
     service = GeocodingService()
