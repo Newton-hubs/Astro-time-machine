@@ -21,7 +21,7 @@ async def test_geocoding(mock_client):
         "display_name": "Bangalore",
         "address": {"country": "India"},
     }]
-    mock_response.raise_for_status = AsyncMock()
+    mock_response.raise_for_status = lambda: None
 
     mock_ctx = AsyncMock()
     mock_ctx.__aenter__.return_value = mock_ctx
