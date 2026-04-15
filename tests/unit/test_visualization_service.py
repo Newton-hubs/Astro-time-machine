@@ -12,7 +12,7 @@ from app.schemas.astronomy import MoonData, WeatherData
 # 🌍 GeocodingService (ASYNC)
 # ---------------------------
 @pytest.mark.asyncio
-@patch("httpx.AsyncClient")
+@patch("app.services.geocoding_service.httpx.AsyncClient")
 async def test_geocoding(mock_client):
     mock_response = AsyncMock()
     mock_response.json.return_value = [{
