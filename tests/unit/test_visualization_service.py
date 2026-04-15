@@ -13,7 +13,8 @@ from app.schemas.astronomy import MoonData, WeatherData
 # ---------------------------
 @pytest.mark.asyncio
 @patch("app.services.geocoding_service.httpx.AsyncClient")
-async def test_geocoding(mock_client):
+async def test_geocoding(mock_client_cls):
+    # --- Mock response ---
     mock_response = AsyncMock()
     mock_response.json.return_value = [{
         "lat": "12.97",
@@ -21,18 +22,24 @@ async def test_geocoding(mock_client):
         "display_name": "Bangalore",
         "address": {"country": "India"},
     }]
-    mock_response.raise_for_status = lambda: None
+    mock_response.raise_for_status = lambda: None  # MUST be sync
 
-    mock_ctx = AsyncMock()
-    mock_ctx.__aenter__.return_value = mock_ctx
-    mock_ctx.get = AsyncMock(return_value=mock_response)
-    mock_client.return_value = mock_ctx
+    # --- Mock client instance ---
+    mock_client = AsyncMock()
+    mock_client.get = AsyncMock(return_value=mock_response)
 
+    # --- Mock context manager ---
+    mock_client_cls.return_value.__aenter__.return_value = mock_client
+    mock_client_cls.return_value.__aexit__.return_value = AsyncMock()
+
+    # --- Call service ---
     service = GeocodingService()
     result = await service.resolve("Bangalore")
 
+    # --- Assertions ---
     assert result.latitude == 12.97
     assert result.longitude == 77.59
+    assert result.location_name == "Bangalore"
 
 
 # ---------------------------
