@@ -31,7 +31,7 @@ class GeocodingService:
                 )
                 resp.raise_for_status()
 
-            results = resp.json()
+                results = resp.json()
             if not results:
                 raise LocationResolutionError(location_name)
 
