@@ -16,7 +16,7 @@ from app.schemas.astronomy import MoonData, WeatherData
 async def test_geocoding(mock_client_cls):
     # --- Mock response ---
     mock_response = AsyncMock()
-    mock_response.json.return_value = [{
+    mock_response.json = lambda:  [{
         "lat": "12.97",
         "lon": "77.59",
         "display_name": "Bangalore",
