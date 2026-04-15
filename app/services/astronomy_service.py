@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from typing import List
 
 import structlog
-from skyfield.api import Loader, wgs84
+from skyfield.api import Loader
 
 from app.core.exceptions import EphemerisError
 from app.schemas.astronomy import MoonData, PlanetData
