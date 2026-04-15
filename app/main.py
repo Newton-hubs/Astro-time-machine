@@ -6,6 +6,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.responses import JSONResponse 
+from app.core.exceptions import RateLimitExceededError, LocationResolutionError
 
 from app.api.v1.endpoints import astronomy, narration, health
 from app.core.config import settings
@@ -41,6 +43,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(RateLimitExceededError) 
+async def rate_limit_handler(request, exc): 
+    return JSONResponse(status_code=429, content={"detail": str(exc)}) 
+@app.exception_handler(LocationResolutionError) 
+async def location_handler(request, exc): 
+    return JSONResponse(status_code=404, content={"detail": str(exc)})
+
 
 # Routers
 app.include_router(health.router, prefix="/api/v1", tags=["health"])
