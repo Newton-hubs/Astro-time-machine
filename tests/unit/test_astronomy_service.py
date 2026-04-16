@@ -296,7 +296,7 @@ class TestComputePlanets:
         
         # At exactly 5°, none should be visible (must be strictly > 5°)
         assert not any(p.is_visible for p in planets), \
-            f"Expected no planets visible at exactly 5° altitude (threshold is >5°)"
+            "Expected no planets visible at exactly 5° altitude (threshold is >5°)"
 
     @patch.object(AstronomyService, "_load_ephemeris")
     def test_all_planets_are_computed(self, mock_load, service, sample_dt):
