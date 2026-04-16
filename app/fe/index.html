@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Astro Time Machine</title>
+
+  <!-- Google Fonts: Display + Body pairing -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ===================== STARRY BACKGROUND ===================== -->
+  <!-- Stars are injected dynamically via JS for randomness -->
+  <div class="star-field" id="starField" aria-hidden="true"></div>
+
+  <!-- Nebula glow layers -->
+  <div class="nebula nebula-1" aria-hidden="true"></div>
+  <div class="nebula nebula-2" aria-hidden="true"></div>
+
+  <!-- ===================== HEADER ===================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">✦</span>
+        <span class="logo-text">ASTRO<span class="logo-accent">TIME</span>MACHINE</span>
+      </div>
+      <p class="tagline">Travel through time · Witness the sky from anywhere on Earth</p>
+    </div>
+  </header>
+
+  <!-- ===================== MAIN LAYOUT ===================== -->
+  <main class="main-grid">
+
+    <!-- LEFT: Mission Control Panel -->
+    <section class="panel control-panel" aria-labelledby="control-heading">
+      <div class="panel-header">
+        <span class="panel-icon">⌖</span>
+        <h2 id="control-heading">Mission Control</h2>
+      </div>
+
+      <!-- Location Mode Toggle -->
+      <div class="field-group">
+        <label class="field-label">Location Mode</label>
+        <div class="toggle-row">
+          <button class="mode-btn active" id="btnManual" aria-pressed="true" onclick="setLocationMode('manual')">Manual</button>
+          <button class="mode-btn" id="btnCity"   aria-pressed="false" onclick="setLocationMode('city')">City Search</button>
+          <button class="mode-btn" id="btnGPS"    aria-pressed="false" onclick="setLocationMode('gps')">GPS</button>
+        </div>
+      </div>
+
+      <!-- Manual Coordinates -->
+      <div class="location-block" id="blockManual">
+        <div class="input-row">
+          <div class="field-group half">
+            <label class="field-label" for="inputLat">Latitude</label>
+            <input class="field-input" id="inputLat" type="number" min="-90" max="90"
+                   step="0.0001" value="12.9716" placeholder="12.9716" />
+          </div>
+          <div class="field-group half">
+            <label class="field-label" for="inputLon">Longitude</label>
+            <input class="field-input" id="inputLon" type="number" min="-180" max="180"
+                   step="0.0001" value="77.5946" placeholder="77.5946" />
+          </div>
+        </div>
+      </div>
+
+      <!-- City Search -->
+      <div class="location-block hidden" id="blockCity">
+        <div class="field-group">
+          <label class="field-label" for="inputCity">City Name</label>
+          <div class="search-row">
+            <input class="field-input" id="inputCity" type="text" placeholder="e.g. Tokyo, Mumbai…" />
+            <button class="icon-btn" id="btnSearchCity" onclick="resolveCity()" title="Search city">⌕</button>
+          </div>
+          <p class="field-hint" id="cityStatus"></p>
+        </div>
+      </div>
+
+      <!-- GPS -->
+      <div class="location-block hidden" id="blockGPS">
+        <button class="secondary-btn full-width" onclick="detectGPS()">📡 Detect my location</button>
+        <p class="field-hint" id="gpsStatus">Click to use browser GPS.</p>
+      </div>
+
+      <!-- Resolved location display -->
+      <div class="resolved-location hidden" id="resolvedLocation">
+        <span class="resolve-icon">📍</span>
+        <span id="resolvedName"></span>
+      </div>
+
+      <!-- Date & Time -->
+      <div class="input-row">
+        <div class="field-group half">
+          <label class="field-label" for="inputDate">Date</label>
+          <input class="field-input" id="inputDate" type="date" />
+        </div>
+        <div class="field-group half">
+          <label class="field-label" for="inputTime">Time (local)</label>
+          <input class="field-input" id="inputTime" type="time" value="21:00" />
+        </div>
+      </div>
+
+      <!-- Location Name (optional) -->
+      <div class="field-group">
+        <label class="field-label" for="inputLocName">Location Name <span class="optional">(optional)</span></label>
+        <input class="field-input" id="inputLocName" type="text" placeholder="e.g. Bengaluru, India" />
+      </div>
+
+      <!-- Submit -->
+      <button class="launch-btn" id="btnGenerate" onclick="generateSky()">
+        <span class="btn-icon">🚀</span>
+        <span class="btn-label">Generate Sky</span>
+        <span class="btn-glow" aria-hidden="true"></span>
+      </button>
+
+      <!-- Error message -->
+      <div class="error-box hidden" id="errorBox" role="alert">
+        <span class="error-icon">⚠</span>
+        <span id="errorText"></span>
+      </div>
+    </section>
+
+    <!-- CENTER: Sky Visualization -->
+    <section class="panel sky-panel" aria-labelledby="sky-heading">
+      <h2 class="sr-only" id="sky-heading">Sky Visualization</h2>
+
+      <!-- The circular sky display -->
+      <div class="sky-viewport" id="skyViewport">
+        <div class="sky-placeholder" id="skyPlaceholder">
+          <div class="placeholder-ring"></div>
+          <div class="placeholder-text">
+            <p class="ph-primary">Set your coordinates</p>
+            <p class="ph-secondary">then launch the sky</p>
+          </div>
+        </div>
+
+        <!-- Rendered sky image -->
+        <img class="sky-image hidden" id="skyImage" alt="Generated night sky visualization" />
+
+        <!-- Loading overlay -->
+        <div class="sky-loading hidden" id="skyLoading" aria-live="polite" aria-busy="true">
+          <div class="orbit-spinner">
+            <div class="orbit-ring ring-1"></div>
+            <div class="orbit-ring ring-2"></div>
+            <div class="orbit-ring ring-3"></div>
+            <div class="orbit-center">✦</div>
+          </div>
+          <p class="loading-text" id="loadingText">Computing celestial positions…</p>
+        </div>
+      </div>
+
+      <!-- Snapshot metadata pill -->
+      <div class="snapshot-meta hidden" id="snapshotMeta">
+        <span class="meta-item" id="metaDatetime"></span>
+        <span class="meta-sep">·</span>
+        <span class="meta-item" id="metaCoords"></span>
+      </div>
+    </section>
+
+    <!-- RIGHT: Info Tiles -->
+    <aside class="panel info-panel" aria-label="Sky data">
+
+      <!-- Moon -->
+      <div class="info-tile" id="tileMoon">
+        <div class="tile-emoji">🌙</div>
+        <div class="tile-label">Moon Phase</div>
+        <div class="tile-value" id="valMoonPhase">—</div>
+        <div class="tile-sub" id="valMoonIllum"></div>
+      </div>
+
+      <!-- Visibility -->
+      <div class="info-tile" id="tileVis">
+        <div class="tile-emoji">👁</div>
+        <div class="tile-label">Moon Visibility</div>
+        <div class="tile-value" id="valVisibility">—</div>
+        <div class="tile-sub" id="valAltAz"></div>
+      </div>
+
+      <!-- Planets -->
+      <div class="info-tile" id="tilePlanets">
+        <div class="tile-emoji">🪐</div>
+        <div class="tile-label">Visible Planets</div>
+        <div class="tile-value planets-list" id="valPlanets">—</div>
+      </div>
+
+      <!-- Weather -->
+      <div class="info-tile" id="tileWeather">
+        <div class="tile-emoji">☁</div>
+        <div class="tile-label">Cloud Cover</div>
+        <div class="tile-value" id="valCloud">—</div>
+        <div class="tile-sub" id="valCloudDesc"></div>
+      </div>
+
+    </aside>
+
+  </main>
+
+  <!-- ===================== AI NARRATION ===================== -->
+  <section class="narration-section hidden" id="narrationSection" aria-labelledby="narration-heading">
+    <div class="narration-inner">
+      <div class="narration-header">
+        <span class="narration-icon">🤖</span>
+        <h3 id="narration-heading">AI Sky Interpretation</h3>
+        <span class="narration-badge" id="modelBadge"></span>
+      </div>
+      <p class="narration-text" id="narrationText"></p>
+
+      <!-- Audio player (shown when voice is available) -->
+      <div class="audio-block hidden" id="audioBlock">
+        <audio id="audioPlayer" controls></audio>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer class="site-footer">
+    <p>Astro Time Machine · Powered by <a href="http://localhost:8000/docs" target="_blank" rel="noopener">FastAPI</a> + Ephemeris data</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -22,7 +22,7 @@ def register_snapshot(snapshot_id: str, snapshot_data: dict):
     """Called by astronomy endpoint to store snapshot for narration lookup."""
     _snapshot_store[snapshot_id] = snapshot_data
 
-
+    print("FETCHING SNAPSHOT:", snapshot_id)
 @router.post("/generate", response_model=NarrationResponse, summary="Generate AI sky narration")
 async def generate_narration(body: NarrationRequest, request: Request):
     """
@@ -79,7 +79,7 @@ async def generate_narration(body: NarrationRequest, request: Request):
         voice_job_id=voice_job_id,
         model_used=model_used,
     )
-
+    
     await set_cached(ck, response.model_dump(), ttl=3600)
     return response
 
