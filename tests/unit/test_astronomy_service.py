@@ -80,7 +80,7 @@ class TestComputeMoon:
         eph_mock.__getitem__ = MagicMock(return_value=MagicMock())
 
         earth_mock = MagicMock()
-        earth_mock.__add__ = MagicMock(return_value=MagicMock())
+        earth_mock.__add__ = MagicMock(return_value=earth_mock)
         earth_mock.at.return_value = observe_chain
 
         def eph_getitem(key):
@@ -123,7 +123,7 @@ class TestComputeMoon:
             observe.observe.return_value.separation_from.return_value = sep_mock
 
             earth = MagicMock()
-            earth.__add__ = MagicMock(return_value=MagicMock())
+            earth.__add__ = MagicMock(return_value=earth)
             earth.at.return_value = observe
             eph_mock.__getitem__ = MagicMock(return_value=earth)
 
@@ -156,7 +156,7 @@ class TestComputeMoon:
             observe.observe.return_value.separation_from.return_value = sep_mock
 
             earth = MagicMock()
-            earth.__add__ = MagicMock(return_value=MagicMock())
+            earth.__add__ = MagicMock(return_value=earth)
             earth.at.return_value = observe
             eph_mock.__getitem__ = MagicMock(return_value=earth)
 
@@ -186,7 +186,7 @@ class TestComputePlanets:
         observe.observe.return_value.apparent.return_value = apparent
 
         earth = MagicMock()
-        earth.__add__ = MagicMock(return_value=MagicMock())
+        earth.__add__ = MagicMock(return_value=earth)
         earth.at.return_value = observe
         eph_mock.__getitem__ = MagicMock(return_value=earth)
 
@@ -220,7 +220,7 @@ class TestComputePlanets:
         observe.observe.return_value.apparent.return_value = apparent
 
         earth = MagicMock()
-        earth.__add__ = MagicMock(return_value=MagicMock())
+        earth.__add__ = MagicMock(return_value=earth)
         earth.at.return_value = observe
         eph_mock.__getitem__ = MagicMock(return_value=earth)
 
