@@ -8,6 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse 
 from app.core.exceptions import RateLimitExceededError, LocationResolutionError
+from fastapi.staticfiles import StaticFiles
+
 
 from app.api.v1.endpoints import astronomy, narration, health
 from app.core.config import settings
@@ -57,3 +59,5 @@ async def location_handler(request, exc):
 app.include_router(health.router, prefix="/api/v1", tags=["health"])
 app.include_router(astronomy.router, prefix="/api/v1/astronomy", tags=["astronomy"])
 app.include_router(narration.router, prefix="/api/v1/narration", tags=["narration"])
+
+app.mount("/", StaticFiles(directory="fe", html=True), name="frontend")
