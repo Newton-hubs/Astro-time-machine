@@ -12,7 +12,7 @@ from fastapi.staticfiles import StaticFiles
 
 
 from app.api.v1.endpoints import astronomy, narration, health
-from app.core.config import settings
+# from app.core.config import settings
 from app.core.logging import setup_logging
 from app.db.redis_client import redis_client
 
