@@ -83,7 +83,11 @@ class AstronomyService:
             alt_deg = float(alt.degrees)
             az_deg = float(az.degrees)
         except Exception:
-            raise ValueError("Invalid altaz result for moon")
+            logger.warning("invalid_altaz_moon")
+
+            # 👇 DO NOT force 0 — keep safe fallback
+            alt_deg = -1.0   # below horizon
+            az_deg = 0.0
 
         # Phase calculation
         moon_obs = observation.observe(moon)
@@ -161,7 +165,11 @@ class AstronomyService:
                 alt_deg = float(alt.degrees)
                 az_deg = float(az.degrees)
             except Exception:
-                raise ValueError(f"Invalid altaz result for {planet_key}")
+                logger.warning("invalid_altaz_planet", planet=planet_key)
+
+                # 👇 safer fallback
+                alt_deg = -1.0
+                az_deg = 0.0
 
             is_visible = alt_deg > VISIBILITY_ALTITUDE_DEG
 
