@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from typing import List
 
 import structlog
-from skyfield.api import Loader
+from skyfield.api import Loader, wgs84
 
 from app.core.exceptions import EphemerisError
 from app.schemas.astronomy import MoonData, PlanetData
@@ -70,9 +70,8 @@ class AstronomyService:
         t = ts.from_datetime(dt_utc.replace(tzinfo=timezone.utc))
 
         # ✅ IMPORTANT: tests mock earth directly (no + wgs84)
-        observer = earth
-
-        observation = observer.at(t)
+        location = earth + wgs84.latlon(latitude, longitude)
+        observation = location.at(t)
 
         apparent = observation.observe(moon).apparent()
 
@@ -145,8 +144,8 @@ class AstronomyService:
         t = ts.from_datetime(dt_utc.replace(tzinfo=timezone.utc))
 
         # ✅ IMPORTANT: same fix as moon
-        observer = earth.at(t)
-
+        location = earth + wgs84.latlon(latitude, longitude)
+        observer = location.at(t)
         results: List[PlanetData] = []
 
         for planet_key in PLANET_NAMES:

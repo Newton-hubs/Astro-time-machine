@@ -22,6 +22,7 @@ from app.services.geocoding_service import geocoding_service
 from app.services.visualization_service import visualization_service
 from app.services.weather_service import weather_service
 
+
 router = APIRouter()
 logger = structlog.get_logger(__name__)
 
@@ -71,17 +72,25 @@ async def compute_sky(
     )
 
     # Parallel-ish: weather doesn't block astronomy
+    print("STEP 1: rate limit passed")
+
     weather = await weather_service.get_cloud_cover(body.latitude, body.longitude)
+    print("STEP 2: weather done")
+
     cloud_cover = weather.cloud_cover_pct if weather else 0.0
 
     moon = astronomy_service.compute_moon(
         body.latitude, body.longitude, body.datetime_utc, cloud_cover
     )
+    print("STEP 3: moon done")
+
     planets = astronomy_service.compute_planets(
         body.latitude, body.longitude, body.datetime_utc
     )
+    print("STEP 4: planets done")
 
     img_b64, w, h = visualization_service.render_sky(moon, planets)
+    print("STEP 5: visualization done")
 
     snapshot = SkySnapshotResponse(
         snapshot_id=str(uuid.uuid4()),
@@ -97,6 +106,12 @@ async def compute_sky(
     )
 
     await set_cached(ck, snapshot.model_dump())
+    print("SAVING SNAPSHOT:", snapshot.snapshot_id)
+
+    # ADD THESE TWO LINES RIGHT HERE ↓
+    from app.api.v1.endpoints.narration import register_snapshot
+    register_snapshot(snapshot.snapshot_id, snapshot.model_dump())
+    
     return snapshot
 
 
