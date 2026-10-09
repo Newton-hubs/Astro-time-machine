@@ -1,4 +1,4 @@
-'''python
+
 """
 Rate limiting (sliding window) and response caching via Redis.
 """
@@ -106,4 +106,4 @@ async def set_cached(
 
     except (RedisError, TypeError, ValueError):
         logger.exception("cache_write_failed", key=key)
-'''
+
