@@ -17,8 +17,11 @@
 
 /* ── Config ─────────────────────────────────────────────── */
 const CONFIG = {
-  API_BASE: 'http://localhost:8000',           // FastAPI server URL
-  STAR_COUNT: 160,                             // Number of background stars
+  API_BASE: window.location.hostname === 'localhost' ||
+            window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:8000'
+    : '', // Use the same origin in production
+  STAR_COUNT: 160,
   LOADING_MESSAGES: [
     'Computing celestial positions…',
     'Calculating moon phase…',
