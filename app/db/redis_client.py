@@ -21,22 +21,31 @@ class RedisClient:
                 max_connections=20,
                 decode_responses=True,
             )
-            self.client = Redis(connection_pool=self._pool)
-            await self.client.ping()
-            logger.info("redis_connected", url=settings.REDIS_URL)
-        except Exception as e:
-            logger.warning("redis_failed", error=str(e))
-            self.client = None  # 👈 important
+            client = Redis(connection_pool=self._pool)
+            await client.ping()
+
+            self.client = client
+            logger.info("redis_connected")
+
+        except Exception:
+            logger.exception("redis_connection_failed")
+            self.client = None
 
     async def disconnect(self) -> None:
         if self.client:
             await self.client.aclose()
+            self.client = None
+            self._pool = None
             logger.info("redis_disconnected")
 
     async def health_check(self) -> bool:
+        if self.client is None:
+            return False
+
         try:
-            return await self.client.ping()
+            return bool(await self.client.ping())
         except Exception:
+            logger.exception("redis_health_check_failed")
             return False
 
 
