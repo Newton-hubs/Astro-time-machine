@@ -1,109 +1,58 @@
-```python
-"""
-Rate limiting (sliding window) and response caching via Redis.
-"""
-import hashlib
-import json
-import time
-from typing import Any, Optional
 
+"""
+Async Redis client with connection pooling.
+"""
 import structlog
-from redis.exceptions import RedisError
+from redis.asyncio import ConnectionPool, Redis
 
 from app.core.config import settings
-from app.db.redis_client import redis_client
 
 logger = structlog.get_logger(__name__)
 
 
-async def check_rate_limit(client_ip: str) -> tuple[bool, int]:
-    """
-    Sliding-window rate limiter.
-    Returns (is_allowed, remaining_requests).
+class RedisClient:
+    def __init__(self):
+        self.client: Redis | None = None
+        self._pool: ConnectionPool | None = None
 
-    WARNING: If Redis is unavailable, requests are allowed without
-    rate limiting. Restore Redis for production use.
-    """
-    client = redis_client.client
+    async def connect(self) -> None:
+        try:
+            self._pool = ConnectionPool.from_url(
+                settings.REDIS_URL,
+                max_connections=20,
+                decode_responses=True,
+            )
 
-    if client is None:
-        logger.warning("rate_limit_skipped_redis_unavailable")
-        return True, settings.RATE_LIMIT_REQUESTS
+            client = Redis(connection_pool=self._pool)
+            await client.ping()
 
-    key = f"rate_limit:{client_ip}"
-    now = time.time()
-    window_start = now - settings.RATE_LIMIT_WINDOW_SECONDS
+            self.client = client
+            logger.info("redis_connected")
 
-    try:
-        pipe = client.pipeline()
-        pipe.zremrangebyscore(key, 0, window_start)
-        pipe.zadd(key, {str(now): now})
-        pipe.zcard(key)
-        pipe.expire(key, settings.RATE_LIMIT_WINDOW_SECONDS)
+        except Exception:
+            logger.exception("redis_connection_failed")
+            self.client = None
 
-        results = await pipe.execute()
+            if self._pool is not None:
+                await self._pool.aclose()
+                self._pool = None
 
-        count = results[2]
-        allowed = count <= settings.RATE_LIMIT_REQUESTS
-        remaining = max(0, settings.RATE_LIMIT_REQUESTS - count)
+    async def disconnect(self) -> None:
+        if self.client is not None:
+            await self.client.aclose()
+            self.client = None
+            self._pool = None
+            logger.info("redis_disconnected")
 
-        return allowed, remaining
+    async def health_check(self) -> bool:
+        if self.client is None:
+            return False
 
-    except RedisError:
-        logger.exception("rate_limit_redis_error")
-        # Fail open: the API works, but rate limiting is bypassed.
-        return True, settings.RATE_LIMIT_REQUESTS
-
-
-def cache_key(*args, **kwargs) -> str:
-    """Generate a deterministic cache key from arguments."""
-    raw = json.dumps(
-        {"args": args, "kwargs": kwargs},
-        sort_keys=True,
-        default=str,
-    )
-    return hashlib.sha256(raw.encode()).hexdigest()
+        try:
+            return bool(await self.client.ping())
+        except Exception:
+            logger.exception("redis_health_check_failed")
+            return False
 
 
-async def get_cached(key: str) -> Optional[Any]:
-    """Get cached data; return None if Redis is unavailable."""
-    client = redis_client.client
-
-    if client is None:
-        return None
-
-    try:
-        data = await client.get(f"cache:{key}")
-
-        if data:
-            logger.debug("cache_hit", key=key)
-            return json.loads(data)
-
-    except (RedisError, json.JSONDecodeError):
-        logger.exception("cache_read_failed", key=key)
-
-    return None
-
-
-async def set_cached(
-    key: str,
-    value: Any,
-    ttl: int = settings.CACHE_TTL_SECONDS,
-) -> None:
-    """Cache data; skip caching if Redis is unavailable."""
-    client = redis_client.client
-
-    if client is None:
-        return
-
-    try:
-        await client.setex(
-            f"cache:{key}",
-            ttl,
-            json.dumps(value, default=str),
-        )
-        logger.debug("cache_set", key=key, ttl=ttl)
-
-    except (RedisError, TypeError, ValueError):
-        logger.exception("cache_write_failed", key=key)
-```
+redis_client = RedisClient()
