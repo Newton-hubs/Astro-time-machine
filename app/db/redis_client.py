@@ -1,3 +1,4 @@
+```python
 """
 Async Redis client with connection pooling.
 """
@@ -21,6 +22,7 @@ class RedisClient:
                 max_connections=20,
                 decode_responses=True,
             )
+
             client = Redis(connection_pool=self._pool)
             await client.ping()
 
@@ -31,8 +33,12 @@ class RedisClient:
             logger.exception("redis_connection_failed")
             self.client = None
 
+            if self._pool is not None:
+                await self._pool.aclose()
+                self._pool = None
+
     async def disconnect(self) -> None:
-        if self.client:
+        if self.client is not None:
             await self.client.aclose()
             self.client = None
             self._pool = None
