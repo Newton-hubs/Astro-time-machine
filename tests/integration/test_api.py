@@ -189,3 +189,11 @@ class TestLocationEndpoint:
             "location_name": "xyzabc_nonexistent_place"
         })
         assert resp.status_code == 404
+
+    @patch("app.api.v1.endpoints.astronomy.check_rate_limit", new_callable=AsyncMock)
+    def test_resolve_location_rate_limited(self, mock_rate_limit, client):
+        mock_rate_limit.return_value = (False, 0)
+        resp = client.post("/api/v1/astronomy/location/resolve", json={
+            "location_name": "Bengaluru"
+        })
+        assert resp.status_code == 429
