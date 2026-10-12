@@ -27,13 +27,17 @@ async def test_connect_failure_sets_client_none():
     client = RedisClient()
     mock_redis = MagicMock()
     mock_redis.ping = AsyncMock(side_effect=RuntimeError("boom"))
+    mock_pool = MagicMock()
+    mock_pool.aclose = AsyncMock()
 
-    with patch("app.db.redis_client.ConnectionPool.from_url", return_value=MagicMock()), patch(
+    with patch("app.db.redis_client.ConnectionPool.from_url", return_value=mock_pool), patch(
         "app.db.redis_client.Redis", return_value=mock_redis
     ):
         await client.connect()
 
     assert client.client is None
+    assert client._pool is None
+    mock_pool.aclose.assert_awaited_once()
 
 
 @pytest.mark.asyncio
